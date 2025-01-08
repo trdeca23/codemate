@@ -9,8 +9,6 @@ from write_file import write_file
 # Load environment variables from the .env file
 load_dotenv()
 
-os.chdir('../file_lib')  # TODO: Later the target directory should be injected by the user
-
 # Gemini interaction
 genai.configure(api_key=os.environ['API_KEY'])
 tools = [# 'code_execution',  # The only string that can be passed as a tool is 'code_execution'
@@ -22,13 +20,11 @@ tools = [# 'code_execution',  # The only string that can be passed as a tool is 
 model = genai.GenerativeModel(model_name='gemini-1.5-pro',  # "gemini-1.5-flash"
                               tools=tools)
 
-chat = model.start_chat()  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
+chat = model.start_chat(enable_automatic_function_calling=True)  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
 
-message = """Ok, I've written out the files as you specified and added a main.py file too, \
-    which you can look at if you'd like. Anything else needed? I know that you have tool_execution \
-    as a tool, but you can't use that when the library isn't included in your environment, so maybe \
-    it would be good to add another function which would be local_code_execution? Any other functions \
-    you can think of that would be good to add?"""  # TODO: Later the message should be injected by the user
+message = """Ok, I've written out the files as you specified, which you can look at if you'd like. \
+    Can you test each of the functions you have available to make sure it works, and if it doesn't \
+    then you can hopefully read the file and suggest what needs to be fixed"""  # TODO: Later the message should be injected by the user
 response = chat.send_message(message)
 
 print(response.text)
