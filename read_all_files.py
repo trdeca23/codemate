@@ -1,41 +1,71 @@
 import os
+import json
 from typing import List, Dict, Union
 from config import TARGET_DIR
 
-def read_all_files(exclude: List[str] = None, path_filter: str = None) -> Dict[str, Union[str, Exception]]:
-    """
-    Reads the contents of all files under the TARGET_DIR, optionally filtering by path_filter and excluding specific files/directories.
+if TARGET_DIR is None:
+    raise EnvironmentError("TARGET_DIR environment variable not set.")
+
+def read_all_files(exclude: List[str] = None, path_filter: str = None) -> Dict[str, Union[str, Exception, bytes]]:
+    """Reads the contents of all files under TARGET_DIR, handling potential UnicodeDecodeErrors and other exceptions.
+       Prioritizes decoding as UTF-8 but falls back to storing raw bytes if decoding fails.
 
     Args:
-        exclude (list, optional): A list of subdirectories, files, or extensions to ignore. Defaults to None.
-        path_filter (str, optional): A string to filter files by. Only files containing this string in their path will be read. Defaults to None.    
+        exclude: A list of subdirectories, files, or extensions to ignore.
+        path_filter: A string to filter files by.
 
     Returns:
-        dict: A dictionary where keys are relative file paths and values are either file contents (str) or exceptions (Exception) encountered while reading.
+        A dictionary where keys are relative file paths and values are either
+        file contents (str if decodable, bytes otherwise) or exceptions.
+
+    Raises:
+        EnvironmentError: If TARGET_DIR is not defined in environment variables.
     """
+
 
     results = {}
     exclude = exclude or []
+
+
     for root, _, files in os.walk(TARGET_DIR):
         rel_root = os.path.relpath(root, TARGET_DIR)
+
+        if any(ex in rel_root for ex in exclude):
+            continue
+
         for file in files:
-
             rel_path = os.path.join(rel_root, file)
+
             if any(ex in file or ex in rel_root for ex in exclude):
-                continue  # Skip excluded files/directories
-
+                continue
             if path_filter and path_filter not in rel_path:
-                continue  # Skip files that don't match the filter
+                continue
 
+            full_path = os.path.join(TARGET_DIR, rel_path)
             try:
-                with open(os.path.join(TARGET_DIR, rel_path), 'r') as f:
+                with open(full_path, 'rb') as f:
                     content = f.read()
-                    results[rel_path] = content
+                    try:
+                         results[rel_path] = content.decode('utf-8')
+                    except UnicodeDecodeError:
+                        results[rel_path] = content  # Store raw bytes if decoding fails
 
-            except FileNotFoundError:
-                results[rel_path] = FileNotFoundError(f"File not found: {rel_path}")
-            except PermissionError:
-                results[rel_path] = PermissionError(f"Permission denied: {rel_path}")
-            except Exception as e:
-                return e
+            except (FileNotFoundError, PermissionError, OSError) as e:  # Handle OS-level errors too
+                results[rel_path] = e
+            except Exception as e:  # Catch any other unexpected exceptions
+                results[rel_path] = e
+
+
+
     return results
+
+
+# # Example usage (set TARGET_DIR in your environment):
+# os.environ["TARGET_DIR"] = "/path/to/your/target/dir"  # Replace with your actual path. Do this outside of the function and before calling
+# file_content = read_all_files(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env'], path_filter='.py')
+# print(json.dumps(file_content, indent=4, default=str))
+# with open("Output.txt", "w+") as text_file:
+#     for file in file_content:
+#      text_file.writelines('Filename: ' + file + '\n')
+#      text_file.writelines(file_content[file])
+#      text_file.writelines('----------------END OF FILE----------------\n\n\n')
