@@ -60,12 +60,13 @@ def read_all_files(exclude: List[str] = None, path_filter: str = None) -> Dict[s
     return results
 
 
-# # Example usage (set TARGET_DIR in your environment):
-# os.environ["TARGET_DIR"] = "/path/to/your/target/dir"  # Replace with your actual path. Do this outside of the function and before calling
-# file_content = read_all_files(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env'], path_filter='.py')
-# print(json.dumps(file_content, indent=4, default=str))
-# with open("Output.txt", "w+") as text_file:
-#     for file in file_content:
-#      text_file.writelines('Filename: ' + file + '\n')
-#      text_file.writelines(file_content[file])
-#      text_file.writelines('----------------END OF FILE----------------\n\n\n')
+if __name__ == "__main__":
+    # Example usage (set TARGET_DIR in your environment):
+    # os.environ["TARGET_DIR"] = "/path/to/your/target/dir"  # Replace with your actual path. Do this outside of the function and before calling
+    file_content = read_all_files(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env'])  #, path_filter='.py')
+    # print(json.dumps(file_content, indent=4, default=str))
+    with open("file_lib_output.txt", "w+") as text_file:
+        for file in file_content:
+         text_file.writelines('Filename: ' + file + '\n')
+         text_file.writelines(file_content[file])
+         text_file.writelines('----------------END OF FILE----------------\n\n\n')
