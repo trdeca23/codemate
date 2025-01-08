@@ -19,21 +19,20 @@ def write_file(relative_path: str, content: str, overwrite: bool = True) -> Unio
 
         file_path = TARGET_DIR / relative_path  # Use pathlib for safe path joining
 
-        # Check if the file_path is within the TARGET_DIR
+        # Security check: Check if the file_path is within the TARGET_DIR
         if not file_path.is_relative_to(TARGET_DIR):  # Enforce security
             raise RuntimeError(f"Access denied. Path outside TARGET_PATH: {file_path}")
         
-        # Create parent directories if they don't exist:
-        dir_path = os.path.dirname(file_path)
-        if dir_path and not os.path.exists(dir_path):
-            os.makedirs(dir_path)
+        # Create parent directories if they don't exist.
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if os.path.exists(file_path) and not overwrite:
+        # Determine file write mode based on overwrite parameter.
+        mode = 'w' if overwrite else 'x'  # 'x' will raise FileExistsError if the file already exists.
 
-            with open(file_path, 'w') as f:
-                f.write(content)
+        with open(file_path, mode) as f:
+            f.write(content)
 
-            return "File written successfully."
+        return "File written successfully."
 
     except FileExistsError as fee: #More specific exception handling
       return fee
