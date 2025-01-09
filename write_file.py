@@ -2,7 +2,7 @@ import os
 from typing import Union
 from config import TARGET_DIR
 
-def write_file(relative_path: str, content: str, overwrite: bool = True) -> Union[str, Exception]:
+def write_file_in_target_dir(relative_path: str, content: str, overwrite: bool = True) -> Union[str, Exception]:
     """
     Writes content to a file at the specified relative path.
 

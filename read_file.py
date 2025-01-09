@@ -1,7 +1,7 @@
 import os
 from config import TARGET_DIR
 
-def read_file(relative_path: str) -> str:
+def read_file_in_target_dir(relative_path: str) -> str:
     """
     Returns a string containing the contents of the file at the specified relative_path.
     Args:

@@ -5,7 +5,7 @@ from pathlib import Path
 from config import TARGET_DIR
 import shutil
 
-def make_directory(relative_path: str) -> dict:
+def make_directory_in_target_dir(relative_path: str) -> dict:
     """Creates a new directory at the specified relative path.
 
     Args:
@@ -26,7 +26,7 @@ def make_directory(relative_path: str) -> dict:
         return {"status": "failed", "message": str(e)}
 
 
-def delete_file(relative_path: str) -> dict:
+def delete_file_in_target_dir(relative_path: str) -> dict:
     """Deletes the file at the specified relative path.
 
     Args:
@@ -48,7 +48,7 @@ def delete_file(relative_path: str) -> dict:
         return {"status": "failed", "message": str(e)}
 
 
-def move_file(source_path: str, destination_path: str) -> dict:
+def move_file_in_target_dir(source_path: str, destination_path: str) -> dict:
     """Moves a file or directory from the source path to the destination path.
 
     Args:
@@ -69,7 +69,7 @@ def move_file(source_path: str, destination_path: str) -> dict:
         return {"status": "failed", "message": str(e)}
 
 
-def copy_file(source_path: str, destination_path: str) -> dict:
+def copy_file_in_target_dir(source_path: str, destination_path: str) -> dict:
     """Copies a file or directory from the source to the destination.
 
     Args:

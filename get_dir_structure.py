@@ -2,7 +2,7 @@ import os
 from typing import List, Dict, Union
 from config import TARGET_DIR
 
-def get_dir_structure(exclude: List[str] = None, recursive: bool = True) -> Union[Dict[str, Union[List[Dict], Exception]], Exception]:
+def get_structure_in_target_dir(exclude: List[str] = None, recursive: bool = True) -> Union[Dict[str, Union[List[Dict], Exception]], Exception]:
     """
     Returns a dictionary representing the directory structure under TARGET_DIR.
 

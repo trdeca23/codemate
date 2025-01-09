@@ -6,7 +6,9 @@ from config import TARGET_DIR
 if TARGET_DIR is None:
     raise EnvironmentError("TARGET_DIR environment variable not set.")
 
-def read_all_files(exclude: List[str] = None, path_filter: str = None) -> Dict[str, Union[str, Exception, bytes]]:
+DEF_EXCLUDE = ['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env']
+
+def read_all_files_in_target_dir(exclude: List[str] = DEF_EXCLUDE, path_filter: str = None) -> Dict[str, Union[str, Exception, bytes]]:
     """Reads the contents of all files under TARGET_DIR, handling potential UnicodeDecodeErrors and other exceptions.
        Prioritizes decoding as UTF-8 but falls back to storing raw bytes if decoding fails.
 
