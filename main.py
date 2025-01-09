@@ -38,6 +38,8 @@ def log_message(message, filepath="interaction_log.txt"):
         print(f"Error logging message: {e}")
         return False
 
+n_calls = 0
+
 # Load environment variables from the .env file
 load_dotenv()
 # Gemini interaction
@@ -71,40 +73,52 @@ while True:
     log_message(f"User: {message}")
 
     response = chat.send_message(message)
+    n_calls+=1
 
     if not enable_automatic_function_calling:
-        response_parts = []
-        for part in response.parts:
-            if fn := part.function_call:
-                args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
-                print(f"\nFunction requested by AI: {fn.name}({args})")
+        finished = False
+        while not finished:
+            response_parts = []
+            for part in response.parts:
+                if fn := part.function_call:
+                    args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
+                    print(f"\nFunction requested by AI: {fn.name}({args})")
 
-                if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
-                    user_input = input("Do you want to allow this code to execute? (yes/no): ")
-                    if user_input.lower() != "yes":
-                        result = "Access denied. User blocked function from running."
-                        print("Function not called.")
-                        log_message(f"AI: Function {fn.name} not called (user denied). ")
-                        response_parts.append(genai.protos.Part(
-                            function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
-                        ))
-                        continue
+                    if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
+                        user_input = input("Do you want to allow this code to execute? (yes/no): ")
+                        if user_input.lower() != "yes":
+                            result = "Access denied. User blocked function from running."
+                            print("Function not called.")
+                            log_message(f"AI: Function {fn.name} not called (user denied). ")
+                            response_parts.append(genai.protos.Part(
+                                function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
+                            ))
+                            continue
 
-                try:
-                    result = locals()[fn.name](**fn.args)
-                    print(f"Function '{fn.name}' called successfully.")
-                    log_message(f"AI: Called function {fn.name} with result: {result}")
+                    try:
+                        result = locals()[fn.name](**fn.args)
+                        print(f"Function '{fn.name}' called successfully.")
+                        log_message(f"AI: Called function {fn.name} with result: {result}")
 
-                except Exception as e:
-                    result = f"Error executing function '{fn.name}': {e}"
-                    print(result)
-                    log_message(f"AI: Error calling function {fn.name}: {e}")
+                    except Exception as e:
+                        result = f"Error executing function '{fn.name}': {e}"
+                        print(result)
+                        log_message(f"AI: Error calling function {fn.name}: {e}")
 
-                response_parts.append(genai.protos.Part(
-                    function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
-                ))
-        if response_parts:
-            response = chat.send_message(response_parts)
+                    response_parts.append(genai.protos.Part(
+                        function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
+                    ))
+                if tx := part.text:
+                    print(tx)
+
+            if response_parts:
+                print("Returning information from function call/s to AI")
+                response = chat.send_message(response_parts)
+                n_calls+=1
+                if len(response.parts) == 1 & response.parts[0].text:
+                    finished = True
+            else:
+                finished = True
 
     print(response.text)
     log_message(f"AI: {response.text}")
