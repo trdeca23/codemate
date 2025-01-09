@@ -46,7 +46,7 @@ ai_reminders = ''
 n_calls = 0
 
 if os.path.exists("ai_reminders.txt"):
-    with open("interaction_log.txt", "r") as f:
+    with open("ai_reminders.txt", "r") as f:
         ai_reminders = f.read()
 
 # Load environment variables from the .env file

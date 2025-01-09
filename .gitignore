@@ -1,3 +1,4 @@
 .env
 interaction_log.txt
+file_lib_output.txt
 __pycache__/
