@@ -62,7 +62,7 @@ response = chat.send_message(message)
 
 if not enable_automatic_function_calling:
     # Print out each of the function calls requested from this single call.
-    responses = {}
+    response_parts = []
     for part in response.parts:
         if fn := part.function_call:
             args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
@@ -72,18 +72,14 @@ if not enable_automatic_function_calling:
             if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
                 user_input = input("Do you want to allow this code to execute? (yes/no): ")
                 if user_input.lower() != "yes":
-                    responses[fn.name] = "Access denied. User blocked function from running"
+                    val = "Access denied. User blocked function from running"
+                    response_parts.append(genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": val})))
                     print("Function not called")
                     continue
-            responses[fn.name] = locals()[fn.name](**fn.args)
+            val = locals()[fn.name](**fn.args)
+            response_parts.append(genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": val})))
             print("Function called")
             # responses['read_file'] = read_file_in_target_dir(relative_path=fn.args['relative_path'])
-
-    # Build the response parts.
-    response_parts = [
-        genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn, response={"result": val}))
-        for fn, val in responses.items()
-    ]
 
     response = chat.send_message(response_parts)
 

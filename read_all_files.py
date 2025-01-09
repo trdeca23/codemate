@@ -65,7 +65,7 @@ def read_all_files_in_target_dir(exclude: List[str] = DEF_EXCLUDE, path_filter: 
 if __name__ == "__main__":
     # Example usage (set TARGET_DIR in your environment):
     # os.environ["TARGET_DIR"] = "/path/to/your/target/dir"  # Replace with your actual path. Do this outside of the function and before calling
-    file_content = read_all_files(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env'])  #, path_filter='.py')
+    file_content = read_all_files_in_target_dir(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env'])  #, path_filter='.py')
     # print(json.dumps(file_content, indent=4, default=str))
     with open("file_lib_output.txt", "w+") as text_file:
         for file in file_content:
