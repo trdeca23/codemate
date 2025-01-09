@@ -40,6 +40,7 @@ model = genai.GenerativeModel(model_name='gemini-1.5-pro',  # "gemini-1.5-pro", 
 
 chat = model.start_chat(enable_automatic_function_calling=enable_automatic_function_calling)
 
+# # Example calls:
 # message = "Help me build a toy app that can be used as a 'calculator' that 'adds' and 'subtracts' colors together. \
 #     Use the read_all_files function to see exactly where the project is up to now, and then FOLLOWING THAT intention, use the write_file function to create new files or overwrite existing ones as needed, and use the read_file function to confirm that your files are being written correctly."
 # message = "Can you write a simple web browser implementation (e.g., that uses uvicorn and whatever else is needed) and a requirements.txt file as well as a README."
@@ -50,8 +51,13 @@ chat = model.start_chat(enable_automatic_function_calling=enable_automatic_funct
 # message = """Can you test each of the API functions you have available to make sure each works. Start by looking at the \
 #     target directory structure, then read the README, and then read all the files ..do not test the write_file function yet though."""  # TODO: Later the message should be injected by the user
 # message = "You are helping me build a library that leverage Gemini to facilitate paired programming between an AI and a human (i.e., human-in-the-loop AI programming). Please use the functions at your dissposal to read the README and see the directory structure. After that, use read_file to take a close look at write_file.py and how it imports the TARGET_DIR so that the write_file function within it is limited to accessing only files within the TARGET_DIR. Once you understand how it's done there, please use the read_file and write_file functions to update file_system_opearations.py so that it imports TARGET_DIR and so as so limit the relative_path to be within the TARGET_DIR"
+# message = 'Read the readme to understand the point of the library in the target directory, as well as all the files. You should then test the code to make sure it functions as intended and make suggestions for improvements'
+# message = "Read the readme, test all the functions, and let me know how you would improve the main.py file"
 
-message = input("Enter a question for AI")
+# TODO: Everything from here down should exist within a while == True loop so that the user can keep asking questions and getting help
+
+message = input("Enter a question for AI\n")
+# TODO: Append the message to a .txt or .csv file so that we can track these in the TARGET_DIR
 response = chat.send_message(message)
 
 if not enable_automatic_function_calling:
@@ -73,8 +79,15 @@ if not enable_automatic_function_calling:
             print("Function called")
             # responses['read_file'] = read_file_in_target_dir(relative_path=fn.args['relative_path'])
 
+    # Build the response parts.
+    response_parts = [
+        genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn, response={"result": val}))
+        for fn, val in responses.items()
+    ]
+
+    response = chat.send_message(response_parts)
+
 print(response.text)
-
-        
-        
-
+print()
+print("NOTE: Remember to routinely look over any changes that have been made and commit or discard them.")
+print()
