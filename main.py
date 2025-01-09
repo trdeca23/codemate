@@ -78,7 +78,7 @@ while True:
     if not enable_automatic_function_calling:
         finished = False
         while not finished:
-            response_parts = []
+            response_parts_fn = []
             for part in response.parts:
                 if fn := part.function_call:
                     args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
@@ -90,7 +90,7 @@ while True:
                             result = "Access denied. User blocked function from running."
                             print("Function not called.")
                             log_message(f"AI: Function {fn.name} not called (user denied). ")
-                            response_parts.append(genai.protos.Part(
+                            response_parts_fn.append(genai.protos.Part(
                                 function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
                             ))
                             continue
@@ -105,21 +105,24 @@ while True:
                         print(result)
                         log_message(f"AI: Error calling function {fn.name}: {e}")
 
-                    response_parts.append(genai.protos.Part(
+                    response_parts_fn.append(genai.protos.Part(
                         function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
                     ))
                 if tx := part.text:
                     print(tx)
+                    log_message(f"AI: {tx.text[:100]}..")
+                    print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
 
-            if response_parts:
+            if response_parts_fn:
                 print("Returning information from function call/s to AI")
-                response = chat.send_message(response_parts)
+                response = chat.send_message(response_parts_fn)
                 n_calls+=1
-                if len(response.parts) == 1 & response.parts[0].text:
+                if (len(response.parts) == 1) & (response.parts[0].function_call.name == ''):
                     finished = True
             else:
                 finished = True
 
-    print(response.text)
-    log_message(f"AI: {response.text}")
-    print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
+    else:
+        print(response.text)
+        log_message(f"AI: {response.text[:100]}..")
+        print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
