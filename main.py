@@ -5,7 +5,7 @@ from get_dir_structure import get_structure_in_target_dir
 from read_all_files import read_all_files_in_target_dir
 from read_file import read_file_in_target_dir
 from write_file import write_file_in_target_dir
-from file_system_operations import (make_directory_in_target_dir, 
+from file_system_operations import (make_directory_in_target_dir,
                                     delete_file_in_target_dir,
                                     move_file_in_target_dir,
                                     copy_file_in_target_dir,
@@ -29,12 +29,21 @@ TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED = [
     "read_file_in_target_dir",
     ]
 
+def log_message(message, filepath="interaction_log.txt"):
+    try:
+        with open(filepath, "a") as f:
+            f.write(message + "\n")
+        return True
+    except Exception as e:
+        print(f"Error logging message: {e}")
+        return False
+
 # Load environment variables from the .env file
 load_dotenv()
-
 # Gemini interaction
 genai.configure(api_key=os.environ['API_KEY'])
 enable_automatic_function_calling = False  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
+
 model = genai.GenerativeModel(model_name='gemini-1.5-pro',  # "gemini-1.5-pro", "gemini-1.5-flash"
                               tools=TOOLS)
 
@@ -54,36 +63,49 @@ chat = model.start_chat(enable_automatic_function_calling=enable_automatic_funct
 # message = 'Read the readme to understand the point of the library in the target directory, as well as all the files. You should then test the code to make sure it functions as intended and make suggestions for improvements'
 # message = "Read the readme, test all the functions, and let me know how you would improve the main.py file"
 
-# TODO: Everything from here down should exist within a while == True loop so that the user can keep asking questions and getting help
+while True:
+    message = input("Enter a question for AI (or type 'exit' to quit):\n")
+    if message.lower() == "exit":
+        break
 
-message = input("Enter a question for AI\n")
-# TODO: Append the message to a .txt or .csv file so that we can track these in the TARGET_DIR
-response = chat.send_message(message)
+    log_message(f"User: {message}")
 
-if not enable_automatic_function_calling:
-    # Print out each of the function calls requested from this single call.
-    response_parts = []
-    for part in response.parts:
-        if fn := part.function_call:
-            args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
-            print()
-            print("Function requested by AI:")
-            print(f"{fn.name}({args})")
-            if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
-                user_input = input("Do you want to allow this code to execute? (yes/no): ")
-                if user_input.lower() != "yes":
-                    val = "Access denied. User blocked function from running"
-                    response_parts.append(genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": val})))
-                    print("Function not called")
-                    continue
-            val = locals()[fn.name](**fn.args)
-            response_parts.append(genai.protos.Part(function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": val})))
-            print("Function called")
-            # responses['read_file'] = read_file_in_target_dir(relative_path=fn.args['relative_path'])
+    response = chat.send_message(message)
 
-    response = chat.send_message(response_parts)
+    if not enable_automatic_function_calling:
+        response_parts = []
+        for part in response.parts:
+            if fn := part.function_call:
+                args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
+                print(f"\nFunction requested by AI: {fn.name}({args})")
 
-print(response.text)
-print()
-print("NOTE: Remember to routinely look over any changes that have been made and commit or discard them.")
-print()
+                if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
+                    user_input = input("Do you want to allow this code to execute? (yes/no): ")
+                    if user_input.lower() != "yes":
+                        result = "Access denied. User blocked function from running."
+                        print("Function not called.")
+                        log_message(f"AI: Function {fn.name} not called (user denied). ")
+                        response_parts.append(genai.protos.Part(
+                            function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
+                        ))
+                        continue
+
+                try:
+                    result = locals()[fn.name](**fn.args)
+                    print(f"Function '{fn.name}' called successfully.")
+                    log_message(f"AI: Called function {fn.name} with result: {result}")
+
+                except Exception as e:
+                    result = f"Error executing function '{fn.name}': {e}"
+                    print(result)
+                    log_message(f"AI: Error calling function {fn.name}: {e}")
+
+                response_parts.append(genai.protos.Part(
+                    function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
+                ))
+        if response_parts:
+            response = chat.send_message(response_parts)
+
+    print(response.text)
+    log_message(f"AI: {response.text}")
+    print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
