@@ -1,6 +1,6 @@
 import os
 from typing import Union
-from config import TARGET_DIR
+from utils.config import TARGET_DIR
 
 def write_file_in_target_dir(relative_path: str, content: str, overwrite: bool = True) -> Union[str, Exception]:
     """

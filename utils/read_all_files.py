@@ -1,7 +1,7 @@
 import os
 import json
 from typing import List, Dict, Union
-from config import TARGET_DIR
+from utils.config import TARGET_DIR
 
 if TARGET_DIR is None:
     raise EnvironmentError("TARGET_DIR environment variable not set.")
@@ -70,6 +70,6 @@ if __name__ == "__main__":
     # print(json.dumps(file_content, indent=4, default=str))
     with open(outfile, "w+") as text_file:
         for file in file_content:
-         text_file.writelines('Filename: ' + file + '\n')
-         text_file.writelines(file_content[file])
-         text_file.writelines('----------------END OF FILE----------------\n\n\n')
+            text_file.write(f"Filename: {file}\n")
+            text_file.write(str(file_content[file]))
+            text_file.write('\n----------------END OF FILE----------------\n\n\n')

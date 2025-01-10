@@ -1,6 +1,6 @@
 import os
 from typing import List, Dict, Union
-from config import TARGET_DIR
+from utils.config import TARGET_DIR
 
 def get_structure_in_target_dir(exclude: List[str] = None, recursive: bool = True) -> Union[Dict[str, Union[List[Dict], Exception]], Exception]:
     """

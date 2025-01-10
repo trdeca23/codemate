@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from config import TARGET_DIR
+from utils.config import TARGET_DIR
 import shutil
 
 def make_directory_in_target_dir(relative_path: str) -> dict:

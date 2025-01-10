@@ -1,5 +1,5 @@
 import os
-from config import TARGET_DIR
+from utils.config import TARGET_DIR
 
 def read_file_in_target_dir(relative_path: str) -> str:
     """
