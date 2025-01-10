@@ -94,7 +94,7 @@ def copy_file_in_target_dir(source_path: str, destination_path: str) -> dict:
         return {"status": "failed", "message": str(e)}
 
 
-def local_code_execution(code: str) -> dict:
+def local_code_execution(code_or_source_path: str) -> dict:
     """Runs code for testing purposes.
 
     Args:
@@ -105,7 +105,7 @@ def local_code_execution(code: str) -> dict:
     """
 
     try:
-        code_path = TARGET_DIR / code
+        code_path = TARGET_DIR / code_or_source_path
         if code_path.exists():
             try:
                 # Attempt to execute the file as a Python script
@@ -118,7 +118,7 @@ def local_code_execution(code: str) -> dict:
                 return {"status": "failed", "message": str(e)}
         else:
             try:
-                exec(code) # Attempt to execute the string as Python code
+                exec(code_or_source_path) # Attempt to execute the string as Python code
                 return {"output": "", "status": "success"} # Return success if execution completes without error
             except Exception as e:
                 return {"status": "failed", "message": str(e)}

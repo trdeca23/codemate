@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 import google.generativeai as genai
+from google.api_core.exceptions import ResourceExhausted
 from get_dir_structure import get_structure_in_target_dir
 import json
 from read_all_files import read_all_files_in_target_dir
@@ -32,6 +33,12 @@ TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED = [
 
 MODELS_BY_PREFERENCE = ["gemini-1.5-pro", "gemini-1.0-pro", "gemini-1.5-flash"]
 
+ENABLE_AUTOMATIC_FUNCTION_CALLING = False  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
+
+model_index = 2
+ai_reminders = ''
+n_calls = 0
+
 def log_message(message, filepath="interaction_log.txt"):
     try:
         with open(filepath, "a") as f:
@@ -41,9 +48,28 @@ def log_message(message, filepath="interaction_log.txt"):
         print(f"Error logging message: {e}")
         return False
 
-model_index = 0
-ai_reminders = ''
-n_calls = 0
+def catch_quota_error(send_message):
+    def wrapper(message):
+        global model_index, model, chat # Declare global variables since we may need to modify them
+        max_retries = len(MODELS_BY_PREFERENCE)
+        retries = 0
+        while retries < max_retries:
+            try:
+                return send_message(message)
+            except ResourceExhausted as e:
+                # increment model_index and re-instantiate model if token limit 429 Resource has been exhausted
+                model_index = (model_index + 1) % len(MODELS_BY_PREFERENCE)
+                print(f"ResourceExhausted error caught: {e}, switching models to {MODELS_BY_PREFERENCE[model_index]}")
+                model = genai.GenerativeModel(model_name=MODELS_BY_PREFERENCE[model_index], tools=TOOLS)
+                history = chat.history
+                chat = model.start_chat(enable_automatic_function_calling=ENABLE_AUTOMATIC_FUNCTION_CALLING, history=history)
+                retries += 1
+        raise RuntimeError("Quota limit reached for all models. Please check your quota, wait, and try again.")
+    return wrapper
+
+@catch_quota_error
+def send_message(message):
+    return chat.send_message(message)
 
 if os.path.exists("ai_reminders.txt"):
     with open("ai_reminders.txt", "r") as f:
@@ -53,12 +79,11 @@ if os.path.exists("ai_reminders.txt"):
 load_dotenv()
 # Gemini interaction
 genai.configure(api_key=os.environ['API_KEY'])
-enable_automatic_function_calling = False  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
 
 model = genai.GenerativeModel(model_name=MODELS_BY_PREFERENCE[model_index],
-                              tools=TOOLS)  # TODO: increment model_index and re-instantiate model anytime error is raised in send_message call due to daily token limit: google.api_core.exceptions.ResourceExhausted: 429 Resource has been exhausted (e.g. check quota).
+                              tools=TOOLS)
 
-chat = model.start_chat(enable_automatic_function_calling=enable_automatic_function_calling)
+chat = model.start_chat(enable_automatic_function_calling=ENABLE_AUTOMATIC_FUNCTION_CALLING)
 
 while True:
     message = input("Enter a question for AI (or type 'exit' to quit):\n")
@@ -70,10 +95,10 @@ while True:
     if n_calls == 0:
         message = message + ai_reminders
 
-    response = chat.send_message(message)
+    response = send_message(message)
     n_calls += 1
 
-    if not enable_automatic_function_calling:
+    if not ENABLE_AUTOMATIC_FUNCTION_CALLING:
         finished = False
         while not finished:
             response_parts_fn = []
@@ -114,8 +139,8 @@ while True:
 
             if response_parts_fn:
                 print("\033[96mReturning information from function call/s to AI\033[0m")
-                response = chat.send_message(response_parts_fn)
-                # TODO: Troubleshoot below error. Could it have to do with the escape characters now added to this file for the color-coding?
+                response = send_message(response_parts_fn)
+                # TODO: Troubleshoot below error if it re-occurs. Could it have to do with the escape characters now added to this file for the color-coding?
                 # Traceback (most recent call last):
                 # File "<string>", line 1, in <module>
                 # File "c:\Users\decandia_te\AppData\Local\miniconda3\envs\wcp\lib\site-packages\google\generativeai\generative_models.py", line 588, in send_message
@@ -129,6 +154,7 @@ while True:
             else:
                 finished = True
 
-    print(f"\033[93m{response.text}\033[0m")
-    log_message(f"AI: {response.text[:100]}..")
-    print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
+    else:
+        print(f"\033[93m{response.text}\033[0m")
+        log_message(f"AI: {response.text[:100]}..")
+        print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")

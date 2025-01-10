@@ -1,39 +1,42 @@
+<div align="center">
+  <img src="logo.png" alt="My Project Logo" width="150">
+</div>
+
 # Gemini File Utilities Library
 
-This library provides a set of file and directory manipulation functions designed to be used as tools within the Gemini Generative AI Python SDK. It 
-facilitates leveraging function calling within Gemini, enabling low-code/no-code interactions with the AI model for various file-related tasks.  This allows for human-in-the-loop AI programming, where Gemini can execute code locally to interact with the file system based on user instructions or its own reasoning.
+The CodeMate library provides a set of file and directory manipulation functions designed to be used as tools (currently limited to the Gemini Generative AI Python SDK) to supercharge your programming. It leverages the agentic framework of function calling to enable low-code/no-code interactions with the AI model.  This allows for human-in-the-loop AI programming, where Gemini can execute code locally to interact with the file system based on user instructions and its own reasoning.
 
 
 ## Recommended Usage with Version Control
 
-For robust and secure development using this library with Gemini, it's highly recommended to use a version control system like Git.  This enables you to track changes, review AI-generated code modifications before they are applied, and maintain a history of your project's evolution.  This iterative process, where a human reviews and approves or rejects changes suggested by the AI, is crucial for safe and reliable low-code AI development.  This is especially true for functions which modify the files, and the iterative process of making changes to files via this library should be accompanied by corresponding commits.
+For robust and secure development using this library with Gemini, it's highly recommended to use a version control system like Git.  This enables you to track changes, review AI-generated code modifications before they are applied, selectively discard, modify and commit changes, and maintain a history of your project's evolution.  This iterative process, where a human reviews and approves or rejects changes suggested by the AI, is crucial for safe and reliable low-code AI development.  This is especially true for functions which modify the files, and the iterative process of making changes to files via this library should be accompanied by corresponding commits.
 
 
 ## Available Functions
 
 *   **`get_dir_structure(target_path: str = ".", exclude: List[str] = None, recursive: bool = True)`:** Returns a dictionary representing the directory structure under the given path. Includes file sizes and allows for excluding specific files/directories and recursive or non-recursive traversal. 
 
-*   **`read_file(relative_path: str)`:** Reads and returns the contents of a file at the specified relative path.
+*   **`read_file_in_target_dir(relative_path: str)`:** Reads and returns the contents of a file at the specified relative path.
 
-*   **`read_all_files(target_path: str = ".", exclude: List[str] = None, path_filter: str = None)`:** Reads the contents of all files within the target directory (and optionally subdirectories) that match a given filter, while also allowing exclusion of specified files/directories. Returns a dictionary mapping filenames to contents or errors.
+*   **`read_all_files_in_target_dir(target_path: str = ".", exclude: List[str] = None, path_filter: str = None)`:** Reads the contents of all files within the target directory (and optionally subdirectories) that match a given filter, while also allowing exclusion of specified files/directories. Returns a dictionary mapping filenames to contents or errors.
 
-*   **`write_file(relative_path: str, content: str, overwrite: bool = True)`:** Writes content to a file at the specified relative path, optionally overwriting the file if it exists. Creates necessary parent directories.
+*   **`write_file_in_target_dir(relative_path: str, content: str, overwrite: bool = True)`:** Writes content to a file at the specified relative path, optionally overwriting the file if it exists. Creates necessary parent directories.
 
-*   **(Suggested) `list_directory(relative_path: str = None)`:** Lists all files and directories at a specified relative path (if given, otherwise list files in current directory).
-*   **(Suggested) `make_directory(relative_path: str)`:** Creates a new directory at the specified relative path.
+*   **`get_structure_in_target_dir(relative_path: str = None)`:** Lists all files and directories at a specified relative path (if given, otherwise list files in current directory).
+*   **`make_directory_in_target_dir(relative_path: str)`:** Creates a new directory at the specified relative path.
 
-*   **(Suggested) `delete_file(relative_path: str)`:** Deletes a file at the specified relative path.
+*   **`delete_file_in_target_dir(relative_path: str)`:** Deletes a file at the specified relative path.
 
-*   **(Suggested) `move_file(source_path: str, destination_path: str)`:** Moves a file or directory from source to destination.
+*   **`move_file_in_target_dir(source_path: str, destination_path: str)`:** Moves a file or directory from source to destination.
 
-*   **(Suggested) `copy_file(source_path: str, destination_path: str)`:** Copies a file or directory from source to destination.
+*   **`copy_file_in_target_dir(source_path: str, destination_path: str)`:** Copies a file or directory from source to destination.
+
+*   **`local_code_execution(code_or_path: str)`:** Runs code or file in target directory. The default permissions are set such that any execution of this function must be preceded by explicit user approval, and this is strongly recommended because there is no way to guarantee that files outside the target directory are modified.
 
 
 ## Usage with Gemini
 
-These functions are designed to be used as tools within the Gemini `GenerativeModel` framework. By passing these functions as tools, you empower Gemini to interact directly with the file system: reading file contents, writing to files, creating directories, listing directory contents and more, all based on conversation and instructions or its own autonomous decisions.
-
-This library streamlines the process of creating complex, file-driven workflows within Gemini, providing a powerful and flexible approach to low-code/no-code AI programming.  The additional suggested tools would further enhance Gemini's file system manipulation abilities, enabling greater automation within your workflows.
+These functions are designed to be used as tools within the Gemini `GenerativeModel` framework. By passing these functions as tools, you empower Gemini to interact directly with the file system: reading file contents, writing to files, creating directories, listing directory contents and more. Users can define which functions need explicit prior human approval each time they are called; the default setting requires such approval for all functions except read functions.
 
 
 ## Security and the TARGET_PATH Environment Variable

@@ -13,7 +13,7 @@ def read_all_files_in_target_dir(exclude: List[str] = DEF_EXCLUDE, path_filter: 
        Prioritizes decoding as UTF-8 but falls back to storing raw bytes if decoding fails.
 
     Args:
-        exclude: A list of subdirectories, files, or extensions to ignore.
+        exclude: A list of subdirectories, files, or extensions to ignore. Defaults to ['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env', 'interaction_log.txt'].
         path_filter: A string to filter files by.
 
     Returns:
@@ -64,10 +64,11 @@ def read_all_files_in_target_dir(exclude: List[str] = DEF_EXCLUDE, path_filter: 
 
 if __name__ == "__main__":
     # Example usage (set TARGET_DIR in your environment):
+    outfile = "codemate_output.txt"
     # os.environ["TARGET_DIR"] = "/path/to/your/target/dir"  # Replace with your actual path. Do this outside of the function and before calling
-    file_content = read_all_files_in_target_dir(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env', 'interaction_log.txt', 'file_lib_output.txt'])  #, path_filter='.py')
+    file_content = read_all_files_in_target_dir(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.pyc', '.env', 'interaction_log.txt', outfile])  #, path_filter='.py')
     # print(json.dumps(file_content, indent=4, default=str))
-    with open("file_lib_output.txt", "w+") as text_file:
+    with open(outfile, "w+") as text_file:
         for file in file_content:
          text_file.writelines('Filename: ' + file + '\n')
          text_file.writelines(file_content[file])

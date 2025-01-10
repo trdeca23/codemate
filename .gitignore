@@ -1,4 +1,4 @@
 .env
 interaction_log.txt
-file_lib_output.txt
+codemate_output.txt
 __pycache__/
