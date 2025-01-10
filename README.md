@@ -84,3 +84,8 @@ set API_KEY=YOUR_ACTUAL_API_KEY
 *   The library uses `pathlib` and resolves `TARGET_PATH` to its absolute path to prevent directory traversal attacks.
 *   All functions that modify the file system (e.g., `write_file`, `delete_file`) include checks to ensure that operations occur *only* within the `TARGET_PATH` directory. Attempts to access files or directories outside this path will result in a `RuntimeError`.  This safeguards against unintended file system modifications.
 *   It's strongly recommended to set `TARGET_PATH` to a dedicated directory specifically for use with Gemini and this library to further enhance security.
+
+
+## Contributing
+
+This is an open source project and you are encouraged to contribute to it to improve it and expand it in scope, and are also encouraged to use the help of AI to do so, or to do so if you are AI!

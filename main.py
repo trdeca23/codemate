@@ -105,13 +105,13 @@ while True:
             for part in response.parts:
                 if fn := part.function_call:
                     args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
-                    print(f"\nFunction requested by AI: \033[94m{fn.name}\033[0m({args})")
+                    print(f"\nFunction requested by AI: {fn.name}({args})")
 
                     if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
                         user_input = input("Do you want to allow this code to execute? (yes/no): ")
                         if user_input.lower() != "yes":
-                            result = "Access denied. User blocked function from running."
-                            print("\033[91mFunction not called.\033[0m")
+                            result = f"Access denied. User blocked function from running. User answer when asked whether they allow function to execute: {user_input}"
+                            print("Function not called.")
                             log_message(f"AI: Function {fn.name} not called (user denied). ")
                             response_parts_fn.append(genai.protos.Part(
                                 function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
@@ -120,12 +120,12 @@ while True:
 
                     try:
                         result = locals()[fn.name](**fn.args)
-                        print(f"\033[92mFunction '{fn.name}' called successfully.\033[0m")
+                        print(f"Function '{fn.name}' called successfully.")
                         log_message(f"AI: Called function {fn.name}")
 
                     except Exception as e:
                         result = f"Error executing function '{fn.name}': {e}"
-                        print(f"\033[91m{result}\033[0m")
+                        print(f"{result}")
                         log_message(f"AI: Error calling function {fn.name}: {e}")
 
                     response_parts_fn.append(genai.protos.Part(
@@ -134,27 +134,19 @@ while True:
 
                 if tx := part.text:
                     if len(response.parts) > 1:
-                        print(f"\033[93m{tx}\033[0m")
+                        print(f"{tx}")
                         log_message(f"AI: {tx[:100]}..")
-                        print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
+                        print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
 
             if response_parts_fn:
-                print("\033[96mReturning information from function call/s to AI\033[0m")
+                print("Returning information from function call/s to AI")
                 response = send_message(response_parts_fn)
-                # TODO: Troubleshoot below error if it re-occurs. Could it have to do with the escape characters now added to this file for the color-coding?
-                # Traceback (most recent call last):
-                # File "<string>", line 1, in <module>
-                # File "c:\Users\decandia_te\AppData\Local\miniconda3\envs\wcp\lib\site-packages\google\generativeai\generative_models.py", line 588, in send_message
-                #     self._check_response(response=response, stream=stream)
-                # File "c:\Users\decandia_te\AppData\Local\miniconda3\envs\wcp\lib\site-packages\google\generativeai\generative_models.py", line 616, in _check_response
-                #     raise generation_types.StopCandidateException(response.candidates[0])
-                # google.generativeai.types.generation_types.StopCandidateException: finish_reason: MALFORMED_FUNCTION_CALL
                 n_calls += 1
                 if (len(response.parts) == 1) & (response.parts[0].function_call.name == ''):
                     finished = True
             else:
                 finished = True
 
-    print(f"\033[93m{response.text}\033[0m")
+    print(f"{response.text}")
     log_message(f"AI: {response.text[:100]}..")
-    print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
+    print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
