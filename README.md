@@ -2,7 +2,7 @@
   <img src="logo.png" alt="My Project Logo" width="150">
 </div>
 
-# Gemini File Utilities Library
+# Gemini Utilities Library
 
 The CodeMate library provides a set of file and directory manipulation functions designed to be used as tools (currently limited to the Gemini Generative AI Python SDK) to supercharge your programming. It leverages the agentic framework of function calling to enable low-code/no-code interactions with the AI model.  This allows for human-in-the-loop AI programming, where Gemini can execute code locally to interact with the file system based on user instructions and its own reasoning.
 
