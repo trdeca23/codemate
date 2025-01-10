@@ -35,7 +35,7 @@ MODELS_BY_PREFERENCE = ["gemini-1.5-pro", "gemini-1.0-pro", "gemini-1.5-flash"]
 
 ENABLE_AUTOMATIC_FUNCTION_CALLING = False  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
 
-model_index = 2
+model_index = 0
 ai_reminders = ''
 n_calls = 0
 
@@ -133,9 +133,10 @@ while True:
                     ))
 
                 if tx := part.text:
-                    print(f"\033[93m{tx}\033[0m")
-                    log_message(f"AI: {tx[:100]}..")
-                    print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
+                    if len(response.parts) > 1:
+                        print(f"\033[93m{tx}\033[0m")
+                        log_message(f"AI: {tx[:100]}..")
+                        print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
 
             if response_parts_fn:
                 print("\033[96mReturning information from function call/s to AI\033[0m")
@@ -154,7 +155,6 @@ while True:
             else:
                 finished = True
 
-    else:
-        print(f"\033[93m{response.text}\033[0m")
-        log_message(f"AI: {response.text[:100]}..")
-        print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
+    print(f"\033[93m{response.text}\033[0m")
+    log_message(f"AI: {response.text[:100]}..")
+    print("\n\033[95mNOTE: Remember to routinely look over any changes and commit or discard them.\033[0m\n")
