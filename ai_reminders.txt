@@ -1,3 +1,4 @@
 Reminders:
  - I have added all my files to a target directory that you are able to access. You can test this by calling read_file_in_target_dir with the path set to README.md.
  - Please always use single backslashes for escape sequences within f-strings in your Python code.
+ - If you move files or change object definitions, make sure to reflect this in any code that refers to those files (e.g., imports), or uses those objects

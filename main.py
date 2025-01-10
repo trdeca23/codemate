@@ -2,16 +2,17 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
-from get_dir_structure import get_structure_in_target_dir
+from utils.get_dir_structure import get_structure_in_target_dir
+
+from utils.read_all_files import read_all_files_in_target_dir
+from utils.read_file import read_file_in_target_dir
+from utils.write_file import write_file_in_target_dir
+from utils.file_system_operations import (make_directory_in_target_dir,
+                                          delete_file_in_target_dir,
+                                          move_file_in_target_dir,
+                                          copy_file_in_target_dir,
+                                          local_code_execution)
 import json
-from read_all_files import read_all_files_in_target_dir
-from read_file import read_file_in_target_dir
-from write_file import write_file_in_target_dir
-from file_system_operations import (make_directory_in_target_dir,
-                                    delete_file_in_target_dir,
-                                    move_file_in_target_dir,
-                                    copy_file_in_target_dir,
-                                    local_code_execution)
 
 TOOLS = [# 'code_execution',  # The only string that can be passed as a tool is 'code_execution'
          get_structure_in_target_dir,
