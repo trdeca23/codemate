@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 from google.api_core.exceptions import ResourceExhausted
+from google.generativeai.types.generation_types import StopCandidateException
 from utils import (
     get_structure_in_target_dir,
     read_all_files_in_target_dir,
@@ -37,7 +38,7 @@ MODELS_BY_PREFERENCE = ["gemini-1.5-pro", "gemini-1.0-pro", "gemini-1.5-flash"]
 
 ENABLE_AUTOMATIC_FUNCTION_CALLING = False  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
 
-model_index = 0
+model_index = 1
 ai_reminders = ''
 n_calls = 0
 
@@ -97,8 +98,17 @@ while True:
     if n_calls == 0:
         message = message + ai_reminders
 
-    response = send_message(message)
-    n_calls += 1
+    malformed_error_retries = 0
+    max_malformed_error_retries = 3
+    while malformed_error_retries < max_malformed_error_retries:  # this while loop is temporary until I find cause for error
+        try:
+            response = send_message(message)
+        except StopCandidateException as e:
+            malformed_error_retries += 1
+            print(f"StopCandidateException error caught: {e}")
+        else:
+            n_calls += 1
+            break
 
     if not ENABLE_AUTOMATIC_FUNCTION_CALLING:
         finished = False
@@ -142,8 +152,25 @@ while True:
 
             if response_parts_fn:
                 print("Returning information from function call/s to AI")
-                response = send_message(response_parts_fn)
-                n_calls += 1
+
+                malformed_error_retries = 0
+                max_malformed_error_retries = 3
+                while malformed_error_retries < max_malformed_error_retries:  # this while loop is temporary until I find cause for error
+                    try:
+                        response = send_message(response_parts_fn)
+                    except StopCandidateException as e:
+                        malformed_error_retries += 1
+                        print(f"StopCandidateException error caught: {e}")
+                    else:
+                        n_calls += 1
+                        break
+                # TODO: Debug - find cause for below error that is often raised: protos.Candidate.FinishReason.MALFORMED_FUNCTION_CALL
+                #   File "..\lib\site-packages\google\generativeai\generative_models.py", line 588, in send_message
+                #     self._check_response(response=response, stream=stream)
+                #   File "..\lib\site-packages\google\generativeai\generative_models.py", line 616, in _check_response
+                #     raise generation_types.StopCandidateException(response.candidates[0])
+                # NOTE: It is returned by the client but we should figure out what in the request causes it so that we can prevent it 
+
                 if (len(response.parts) == 1) & (response.parts[0].function_call.name == ''):
                     finished = True
             else:
