@@ -14,15 +14,14 @@ For robust and secure development using this library with Gemini, it's highly re
 
 ## Available Functions
 
-*   **`get_dir_structure(target_path: str = ".", exclude: List[str] = None, recursive: bool = True)`:** Returns a dictionary representing the directory structure under the given path. Includes file sizes and allows for excluding specific files/directories and recursive or non-recursive traversal. 
+*   **`get_structure_in_target_dir(exclude: List[str] = None, recursive: bool = True)`:** Returns a dictionary representing the directory structure under the given path. Includes file sizes and allows for excluding specific files/directories and recursive or non-recursive traversal. 
 
 *   **`read_file_in_target_dir(relative_path: str)`:** Reads and returns the contents of a file at the specified relative path.
 
-*   **`read_all_files_in_target_dir(target_path: str = ".", exclude: List[str] = None, path_filter: str = None)`:** Reads the contents of all files within the target directory (and optionally subdirectories) that match a given filter, while also allowing exclusion of specified files/directories. Returns a dictionary mapping filenames to contents or errors.
+*   **`read_all_files_in_target_dir(exclude: List[str] = None, path_filter: str = None)`:** Reads the contents of all files within the target directory (and optionally subdirectories) that match a given filter, while also allowing exclusion of specified files/directories. Returns a dictionary mapping filenames to contents or errors.
 
 *   **`write_file_in_target_dir(relative_path: str, content: str, overwrite: bool = True)`:** Writes content to a file at the specified relative path, optionally overwriting the file if it exists. Creates necessary parent directories.
 
-*   **`get_structure_in_target_dir(relative_path: str = None)`:** Lists all files and directories at a specified relative path (if given, otherwise list files in current directory).
 *   **`make_directory_in_target_dir(relative_path: str)`:** Creates a new directory at the specified relative path.
 
 *   **`delete_file_in_target_dir(relative_path: str)`:** Deletes a file at the specified relative path.
@@ -31,7 +30,7 @@ For robust and secure development using this library with Gemini, it's highly re
 
 *   **`copy_file_in_target_dir(source_path: str, destination_path: str)`:** Copies a file or directory from source to destination.
 
-*   **`local_code_execution(code_or_path: str)`:** Runs code or file in target directory. The default permissions are set such that any execution of this function must be preceded by explicit user approval, and this is strongly recommended because there is no way to guarantee that files outside the target directory are modified.
+*   **`local_code_execution(code_or_source_path: str)`:** Runs Python code (either a file path to a .py file or a raw string of Python code). The default permissions are set such that any execution of this function must be preceded by explicit user approval, and this is strongly recommended because it is possible for files outside the target directory to be modified by this function.
 
 
 ## Usage with Gemini
