@@ -15,6 +15,10 @@ from utils import (
     local_code_execution
     )
 import json
+from rich import print
+from rich.console import Console
+from rich.style import Style
+console = Console()
 
 TOOLS = [# 'code_execution',  # The only string that can be passed as a tool is 'code_execution'
          get_structure_in_target_dir,
@@ -34,7 +38,7 @@ TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED = [
     "read_file_in_target_dir",
     ]
 
-MODELS_BY_PREFERENCE = ["gemini-1.5-pro", "gemini-1.0-pro", "gemini-1.5-flash"]
+MODELS_BY_PREFERENCE = ["gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.0-pro"]
 
 ENABLE_AUTOMATIC_FUNCTION_CALLING = False  # Warning: Do not use `enable_automatic_function_calling=True` in production applications as there are no data input verification checks for automatic function calls.
 
@@ -48,7 +52,7 @@ def log_message(message, filepath="interaction_log.txt"):
             f.write(message + "\n")
         return True
     except Exception as e:
-        print(f"Error logging message: {e}")
+        console.print(f"Error logging message: {e}", style="red")
         return False
 
 def catch_quota_error(send_message):
@@ -62,7 +66,7 @@ def catch_quota_error(send_message):
             except ResourceExhausted as e:
                 # increment model_index and re-instantiate model if token limit 429 Resource has been exhausted
                 model_index = (model_index + 1) % len(MODELS_BY_PREFERENCE)
-                print(f"ResourceExhausted error caught: {e}, switching models to {MODELS_BY_PREFERENCE[model_index]}")
+                console.print(f"ResourceExhausted error caught: {e}, switching models to {MODELS_BY_PREFERENCE[model_index]}", style="yellow")
                 model = genai.GenerativeModel(model_name=MODELS_BY_PREFERENCE[model_index], tools=TOOLS)
                 history = chat.history
                 chat = model.start_chat(enable_automatic_function_calling=ENABLE_AUTOMATIC_FUNCTION_CALLING, history=history)
@@ -100,15 +104,24 @@ while True:
 
     malformed_error_retries = 0
     max_malformed_error_retries = 3
-    while malformed_error_retries < max_malformed_error_retries:  # this while loop is temporary until I find cause for error
+    while malformed_error_retries < max_malformed_error_retries:
         try:
             response = send_message(message)
+            break  # Exit loop on success
         except StopCandidateException as e:
             malformed_error_retries += 1
-            print(f"StopCandidateException error caught: {e}")
-        else:
-            n_calls += 1
-            break
+            error_message = f"StopCandidateException error caught (attempt {malformed_error_retries}/{max_malformed_error_retries}): {e}"
+            console.print(error_message, style="yellow")
+            log_message(f"ERROR: {error_message}")
+
+    if malformed_error_retries == max_malformed_error_retries:
+        console.print(
+            "The AI returned a 'malformed function' error multiple times.  "
+            "Please rephrase your question or try a different approach.",
+            style="red"
+        )
+        log_message("ERROR:  Max retries exceeded for 'malformed function' error. User needs to rephrase.")
+        continue  # Skip to the next iteration of the main loop
 
     if not ENABLE_AUTOMATIC_FUNCTION_CALLING:
         finished = False
@@ -117,13 +130,13 @@ while True:
             for part in response.parts:
                 if fn := part.function_call:
                     args = ", ".join(f"{key}={val}" for key, val in fn.args.items())
-                    print(f"\nFunction requested by AI: {fn.name}({args})")
+                    console.print(f"\nFunction requested by AI: [blue]{fn.name}[/blue]({args})", style="bold blue")
 
                     if fn.name not in TOOLNAMES_SUBSET_HUMAN_NOT_REQUIRED:
                         user_input = input("Do you want to allow this code to execute? (yes/no): ")
                         if user_input.lower() != "yes":
                             result = f"Access denied. User blocked function from running. User answer when asked whether they allow function to execute: {user_input}"
-                            print("Function not called.")
+                            console.print("Function not called.", style="yellow")
                             log_message(f"AI: Function {fn.name} not called (user denied). ")
                             response_parts_fn.append(genai.protos.Part(
                                 function_response=genai.protos.FunctionResponse(name=fn.name, response={"result": result})
@@ -132,12 +145,12 @@ while True:
 
                     try:
                         result = locals()[fn.name](**fn.args)
-                        print(f"Function '{fn.name}' called successfully.")
+                        console.print(f"Function '{fn.name}' called successfully.", style="green")
                         log_message(f"AI: Called function {fn.name}")
 
                     except Exception as e:
                         result = f"Error executing function '{fn.name}': {e}"
-                        print(f"{result}")
+                        console.print(f"{result}", style="red")
                         log_message(f"AI: Error calling function {fn.name}: {e}")
 
                     response_parts_fn.append(genai.protos.Part(
@@ -146,24 +159,13 @@ while True:
 
                 if tx := part.text:
                     if len(response.parts) > 1:
-                        print(f"{tx}")
+                        console.print(f"{tx}", style="blue")
                         log_message(f"AI: {tx[:100]}..")
-                        print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
+                        console.print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n", style="yellow")
 
             if response_parts_fn:
-                print("Returning information from function call/s to AI")
+                console.print("Returning information from function call/s to AI", style="yellow")
 
-                malformed_error_retries = 0
-                max_malformed_error_retries = 3
-                while malformed_error_retries < max_malformed_error_retries:  # this while loop is temporary until I find cause for error
-                    try:
-                        response = send_message(response_parts_fn)
-                    except StopCandidateException as e:
-                        malformed_error_retries += 1
-                        print(f"StopCandidateException error caught: {e}")
-                    else:
-                        n_calls += 1
-                        break
                 # TODO: Debug - find cause for below error that is often raised: protos.Candidate.FinishReason.MALFORMED_FUNCTION_CALL
                 #   File "..\lib\site-packages\google\generativeai\generative_models.py", line 588, in send_message
                 #     self._check_response(response=response, stream=stream)
@@ -171,11 +173,24 @@ while True:
                 #     raise generation_types.StopCandidateException(response.candidates[0])
                 # NOTE: It is returned by the client but we should figure out what in the request causes it so that we can prevent it 
 
+                malformed_error_retries = 0
+                max_malformed_error_retries = 3
+                while malformed_error_retries < max_malformed_error_retries:  # this while loop is temporary until I find cause for error
+                    try:
+                        response = send_message(response_parts_fn)
+                        n_calls += 1
+                        break  # Exit loop on success
+                    except StopCandidateException as e:
+                        malformed_error_retries += 1
+                        error_message = f"StopCandidateException error caught (attempt {malformed_error_retries}/{max_malformed_error_retries}): {e}"
+                        console.print(error_message, style="yellow")
+                        log_message(f"ERROR: {error_message}")
+
                 if (len(response.parts) == 1) & (response.parts[0].function_call.name == ''):
                     finished = True
             else:
                 finished = True
 
-    print(f"{response.text}")
+    console.print(f"{response.text}", style="blue")
     log_message(f"AI: {response.text[:100]}..")
-    print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n")
+    console.print("\nNOTE: Remember to routinely look over any changes and commit or discard them.\n", style="yellow")
