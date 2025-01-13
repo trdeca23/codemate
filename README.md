@@ -7,6 +7,46 @@
 The CodeMate library provides a set of file and directory manipulation functions designed to be used as tools (currently limited to the Gemini Generative AI Python SDK) to supercharge your programming. It leverages the agentic framework of function calling to enable low-code/no-code interactions with the AI model.  This allows for human-in-the-loop AI programming, where Gemini can execute code locally to interact with the file system based on user instructions and its own reasoning.
 
 
+## Setup
+
+This project uses setuptools for packaging and installation.  Before proceeding, ensure you have Python 3.7 or higher installed.
+
+1. **Install setuptools:** If you don't already have it, install it using pip:
+
+   ```bash
+   pip install setuptools
+   ```
+
+2. **Install Dependencies:** Install the project's dependencies using pip:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Build the package:** Navigate to the project's root directory and run:
+
+   ```bash
+   python setup.py sdist bdist_wheel
+   ```
+
+   This will create the source distribution (`sdist`) and wheel distribution (`bdist_wheel`) in the `dist` directory.
+
+4. **Install the package:** You can now install your package locally using:
+
+   ```bash
+   pip install dist/codemate-0.1.0-py3-none-any.whl  
+   ```
+
+   (Replace `codemate-0.1.0-py3-none-any.whl` with the actual filename if it's different).  Alternatively, you can install from the      
+source distribution:
+
+   ```bash
+   pip install dist/codemate-0.1.0.tar.gz
+   ```
+
+   (Adjust the filename as needed).
+
+
 ## Recommended Usage with Version Control
 
 For robust and secure development using this library with Gemini, it's highly recommended to use a version control system like Git.  This enables you to track changes, review AI-generated code modifications before they are applied, selectively discard, modify and commit changes, and maintain a history of your project's evolution.  This iterative process, where a human reviews and approves or rejects changes suggested by the AI, is crucial for safe and reliable low-code AI development.  This is especially true for functions which modify the files, and the iterative process of making changes to files via this library should be accompanied by corresponding commits.
