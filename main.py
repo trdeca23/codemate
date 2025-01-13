@@ -171,7 +171,7 @@ while True:
                 #     self._check_response(response=response, stream=stream)
                 #   File "..\lib\site-packages\google\generativeai\generative_models.py", line 616, in _check_response
                 #     raise generation_types.StopCandidateException(response.candidates[0])
-                # NOTE: It is returned by the client but we should figure out what in the request causes it so that we can prevent it 
+                # NOTE: It is returned by the client but we should isolate the types of requests that are problematic, e.g. so far read_all_files_in_target_dir may be the most problematic
 
                 malformed_error_retries = 0
                 max_malformed_error_retries = 3
