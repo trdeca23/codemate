@@ -66,7 +66,7 @@ if __name__ == "__main__":
     # Example usage (set TARGET_DIR in your environment):
     outfile = "codemate_output.txt"
     file_content = read_all_files_in_target_dir(exclude=['.git', '.venv', '__pycache__', '.DS_Store', '.jpg', '.png', '.pyc', '.env', 'interaction_log.txt', outfile])
-    with open(outfile, "w+", encoding="utf-8") as text_file:
+    with open(outfile, "w+", encoding="utf-8", newline="\n") as text_file:
         for file, content in file_content.items():
             text_file.write(f"Filename: {file}\n")
 
